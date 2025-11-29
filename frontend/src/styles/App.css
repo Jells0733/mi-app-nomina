@@ -1,0 +1,393 @@
+/* Base del body */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Centrado global */
+main, .container, .panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+/* Navbar */
+nav {
+  background-color: #343a40;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+nav span {
+  color: #adb5bd;
+}
+
+/* Formularios */
+form {
+  background-color: #fff;
+  padding: 2rem;
+  margin: 2rem 0;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #ddd;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Formularios de autenticación (Login y Register) */
+.auth-form {
+  max-width: 600px !important;
+  width: 90%;
+  min-width: 400px;
+  padding: 3rem !important;
+}
+
+.auth-form input,
+.auth-form select {
+  padding: 0.75rem !important;
+  font-size: 1rem;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.auth-form button {
+  padding: 0.75rem !important;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100% !important;
+}
+
+form input,
+form select {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+form button {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  width: 100%;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+form button:hover {
+  background-color: #0056b3;
+}
+
+/* Listas de datos */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  width: 100%;
+  max-width: 600px;
+}
+
+ul li {
+  background-color: #fff;
+  margin-bottom: 0.5rem;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 0 4px #ccc;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+ul li > *:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Encabezados */
+h1, h2, h3, p {
+  text-align: center;
+}
+
+/* Botones generales */
+button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.panel-section {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+/* Formularios dentro del panel de administrador */
+.admin-panel .panel-section form {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.admin-panel .panel-section form > div {
+  width: 100%;
+}
+
+.admin-panel .panel-section form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.admin-panel .panel-section form input,
+.admin-panel .panel-section form select {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+.admin-panel .panel-section form button[type="submit"],
+.admin-panel .panel-section form button[type="button"] {
+  margin-top: 0;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  min-width: 150px;
+}
+
+.admin-panel .panel-section form button[type="button"] {
+  background: #6c757d;
+}
+
+.admin-panel .panel-section form button[type="button"]:hover {
+  background: #5a6268;
+}
+
+/* Estilos para modo de edición */
+.panel-section.editing-mode {
+  background-color: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
+  transform: translateY(-2px);
+}
+
+.panel-section.editing-mode h3 {
+  color: #856404;
+  margin-bottom: 1rem;
+}
+
+.panel-section.editing-mode form {
+  background-color: #fff;
+  border: 1px solid #ffc107;
+}
+
+/* Animación de scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Mejoras en los botones de edición */
+ul li button {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+ul li button:first-of-type {
+  background-color: #28a745;
+}
+
+ul li button:first-of-type:hover {
+  background-color: #218838;
+}
+
+ul li button:last-of-type {
+  background-color: #dc3545;
+}
+
+ul li button:last-of-type:hover {
+  background-color: #c82333;
+}
+
+/* Contenedor de botones */
+ul li > div:last-child {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Estilos para tablas */
+.admin-panel {
+  max-width: 98% !important;
+  width: 98%;
+  margin: 1rem auto !important;
+  padding: 1rem;
+}
+
+.admin-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-panel table thead {
+  background-color: #343a40;
+  color: #fff;
+}
+
+.admin-panel table thead th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #495057;
+}
+
+.admin-panel table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.admin-panel table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.admin-panel table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.admin-panel table tbody tr:nth-child(even):hover {
+  background-color: #e9ecef;
+}
+
+.admin-panel table tbody td {
+  padding: 0.75rem;
+  border: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.admin-panel table tbody td button {
+  margin: 0 0.25rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.admin-panel table tbody td button:hover {
+  transform: translateY(-1px);
+}
+
+/* Estilos específicos para el panel de empleados */
+.panel:not(.admin-panel) {
+  max-width: 100%;
+  width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.panel:not(.admin-panel) .panel-section {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.panel:not(.admin-panel) ul {
+  max-width: 100%;
+  width: 100%;
+}
+
+.panel:not(.admin-panel) ul li {
+  display: block;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Tablas responsivas en el panel de empleados */
+.panel:not(.admin-panel) details {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.panel:not(.admin-panel) details > div {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.panel:not(.admin-panel) table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+  .panel:not(.admin-panel) ul li > div > div:first-child {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .panel:not(.admin-panel) table {
+    font-size: 0.8rem;
+    min-width: 500px;
+  }
+  
+  .panel:not(.admin-panel) table th,
+  .panel:not(.admin-panel) table td {
+    padding: 0.5rem !important;
+  }
+}

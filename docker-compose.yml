@@ -1,0 +1,92 @@
+# Configuración de Docker Compose para el entorno de desarrollo
+# Define todos los servicios necesarios para ejecutar la aplicación completa
+
+services:
+  # Servicio del backend (API REST)
+  backend:
+    # Construir imagen desde el directorio backend
+    build: ./backend
+    ports:
+      # Exponer puerto 4000 para acceso externo
+      - "4000:4000"
+    volumes:
+      # Montar código fuente para desarrollo en tiempo real
+      - ./backend:/app
+      # Preservar node_modules del contenedor
+      - /app/node_modules
+    environment:
+      # Configurar entorno de desarrollo
+      NODE_ENV: development
+      # Puerto del servidor
+      PORT: 4000
+      # Configuración de base de datos
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: Ntc0394**
+      DB_NAME: miapp
+      DB_PORT: 5432
+      # Secretos de autenticación (cambiar en producción)
+      JWT_SECRET: ${JWT_SECRET:-tu-secreto-jwt-muy-seguro-cambiar-en-produccion}
+    depends_on:
+      # Depender de la base de datos
+      - db
+
+  # Servicio del frontend (React)
+  frontend:
+    # Construir imagen desde el directorio frontend
+    build: ./frontend
+    ports:
+      # Exponer puerto 3000 para acceso externo
+      - "3000:3000"
+    volumes:
+      # Montar código fuente para desarrollo en tiempo real
+      - ./frontend:/app
+      # Preservar node_modules del contenedor
+      - /app/node_modules
+    environment:
+      # Configurar entorno de desarrollo
+      NODE_ENV: development
+    depends_on:
+      # Depender del backend
+      - backend
+
+  # Servicio de base de datos principal (PostgreSQL)
+  db:
+    # Usar PostgreSQL versión 15
+    image: postgres:15
+    environment:
+      # Usuario de la base de datos
+      POSTGRES_USER: postgres
+      # Contraseña de la base de datos
+      POSTGRES_PASSWORD: Ntc0394**
+      # Nombre de la base de datos principal
+      POSTGRES_DB: miapp
+    ports:
+      # Exponer puerto estándar de PostgreSQL
+      - "5432:5432"
+    volumes:
+      # Persistir datos de la base de datos
+      - pgdata:/var/lib/postgresql/data
+      # Script de inicialización
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # Servicio de administración de base de datos (pgAdmin)
+  pgadmin:
+    # Usar pgAdmin 4 para administración web
+    image: dpage/pgadmin4
+    environment:
+      # Email de acceso
+      PGADMIN_DEFAULT_EMAIL: jorge.llamas@local.dev
+      # Contraseña de acceso
+      PGADMIN_DEFAULT_PASSWORD: Ntc0394**
+    ports:
+      # Exponer puerto 5050 para acceso web
+      - "5050:80"
+    depends_on:
+      # Depender de la base de datos
+      - db
+
+# Volúmenes para persistir datos
+volumes:
+  # Volumen para datos de la base de datos principal
+  pgdata:

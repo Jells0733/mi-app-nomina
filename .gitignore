@@ -1,0 +1,50 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Logs
+logs
+*.log
+*.log.*
+
+# dotenv files - NOT IGNORED FOR TECHNICAL TEST
+# .env
+# .env.local
+# .env.*.local
+
+# Build outputs
+dist/
+build/
+
+# Coverage reports
+coverage/
+
+# Docker volumes
+pgdata/
+*.pid
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+
+# Compiled files
+*.tsbuildinfo
+
+# Optional: screenshots or generated content
+screenshots/
+
+# Ignore frontend and backend specific modules
+backend/node_modules/
+frontend/node_modules/
+
+# Ignore generated lockfiles if not using lock commit strategy
+# backend/package-lock.json
+# frontend/package-lock.json
