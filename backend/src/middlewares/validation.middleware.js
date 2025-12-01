@@ -255,6 +255,27 @@ const validateUpdateEmpleado = [
     .trim()
     .isIn(['Activo', 'Inactivo']).withMessage('El estado debe ser "Activo" o "Inactivo"')
     .customSanitizer((value) => value ? sanitizeString(value) : undefined),
+
+  // Campos opcionales para actualizar datos de acceso (usuario asociado)
+  body('username')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ min: 3, max: 50 }).withMessage('El nombre de usuario debe tener entre 3 y 50 caracteres')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('El nombre de usuario solo puede contener letras, números y guiones bajos')
+    .customSanitizer((value) => value ? sanitizeString(value) : undefined),
+
+  body('email')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isEmail().withMessage('El email debe tener un formato válido')
+    .normalizeEmail()
+    .customSanitizer((value) => value ? sanitizeEmail(value) : undefined),
+
+  body('password')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres')
+    .isLength({ max: 100 }).withMessage('La contraseña no puede exceder 100 caracteres'),
   
   handleValidationErrors
 ];

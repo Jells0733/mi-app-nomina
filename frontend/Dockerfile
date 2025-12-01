@@ -12,7 +12,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar todas las dependencias (incluyendo devDependencies para desarrollo)
-RUN npm install --legacy-peer-deps && npm cache clean --force
+# Usar npm ci para reproducibilidad: instala exactamente las versiones de package-lock.json
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Copiar archivos de configuración
 COPY webpack.config.js ./

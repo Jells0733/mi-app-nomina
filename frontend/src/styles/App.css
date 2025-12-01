@@ -18,6 +18,14 @@ main, .container, .panel {
   padding: 1rem;
 }
 
+/* Admin panel con ancho completo */
+.panel.admin-panel {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 1rem !important;
+  box-sizing: border-box !important;
+}
+
 /* Navbar */
 nav {
   background-color: #343a40;
@@ -375,8 +383,18 @@ ul li > div:last-child {
   font-size: 0.9rem;
 }
 
-/* Responsive para pantallas pequeñas */
+/* Grid responsive para formulario de empleado en modal */
+.empleado-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
 @media (max-width: 768px) {
+  .empleado-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
   .panel:not(.admin-panel) ul li > div > div:first-child {
     grid-template-columns: 1fr !important;
   }

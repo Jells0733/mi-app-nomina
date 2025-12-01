@@ -53,6 +53,8 @@ const AdminPanel = () => {
 
   const [modoEdicion, setModoEdicion] = useState(false);
   const [empleadoEditando, setEmpleadoEditando] = useState(null);
+  const [editarCredenciales, setEditarCredenciales] = useState(false);
+  const [mostrarFormularioEmpleado, setMostrarFormularioEmpleado] = useState(false);
 
   // Estado del formulario de nómina
   const [nuevaNomina, setNuevaNomina] = useState({
@@ -223,9 +225,9 @@ const AdminPanel = () => {
         base_salary: parseFloat(baseSalaryNumeric),
         // Si se debe crear usuario, incluir datos del usuario
         crear_usuario: nuevoEmpleado.crear_usuario || false,
-        username: nuevoEmpleado.crear_usuario ? nuevoEmpleado.username.trim() : null,
-        email: nuevoEmpleado.crear_usuario ? nuevoEmpleado.email.trim().toLowerCase() : null,
-        password: nuevoEmpleado.crear_usuario ? nuevoEmpleado.password : null
+        username: nuevoEmpleado.crear_usuario && typeof nuevoEmpleado.username === 'string' && nuevoEmpleado.username.trim().length > 0 ? nuevoEmpleado.username.trim() : null,
+        email: nuevoEmpleado.crear_usuario && typeof nuevoEmpleado.email === 'string' && nuevoEmpleado.email.trim().length > 0 ? nuevoEmpleado.email.trim().toLowerCase() : null,
+        password: nuevoEmpleado.crear_usuario && typeof nuevoEmpleado.password === 'string' && nuevoEmpleado.password.trim().length > 0 ? nuevoEmpleado.password.trim() : null
       };
       
       // Validar campos de usuario si se va a crear
@@ -259,6 +261,7 @@ const AdminPanel = () => {
         email: '',
         password: ''
       });
+      setMostrarFormularioEmpleado(false);
       showAlert('Empleado creado exitosamente', 'success');
     } catch (err) {
       console.error('Error al crear empleado:', err);
@@ -270,6 +273,7 @@ const AdminPanel = () => {
   const handleEditarEmpleado = (emp) => {
     setModoEdicion(true);
     setEmpleadoEditando(emp);
+    setEditarCredenciales(false);
     setNuevoEmpleado({
       doc_type: emp.doc_type || 'CC',
       doc_number: emp.doc_number || '',
@@ -281,13 +285,18 @@ const AdminPanel = () => {
       base_salary: emp.base_salary ? formatCurrencyInput(emp.base_salary.toString()) : '',
       banco: emp.banco || '',
       cuenta: emp.cuenta || '',
-      status: emp.status || 'Activo'
+      status: emp.status || 'Activo',
+      // Datos de acceso existentes (si los hay)
+      username: emp.username || '',
+      email: emp.email || '',
+      password: ''
     });
     
     setTimeout(() => {
       empleadoFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       nombreInputRef.current?.focus();
     }, 100);
+    setMostrarFormularioEmpleado(true);
   };
 
   const handleActualizarEmpleado = async (e) => {
@@ -314,6 +323,19 @@ const AdminPanel = () => {
         base_salary: parseFloat(baseSalaryNumeric)
       };
       
+      // Solo incluir campos de credenciales si editarCredenciales está marcado
+      // Similar a handleCrearEmpleado que usa crear_usuario
+      if (editarCredenciales) {
+        empleadoData.username = nuevoEmpleado.username ? nuevoEmpleado.username.trim() : null;
+        empleadoData.email = nuevoEmpleado.email ? nuevoEmpleado.email.trim().toLowerCase() : null;
+        empleadoData.password = nuevoEmpleado.password ? nuevoEmpleado.password.trim() : null;
+      } else {
+        // Excluir campos de credenciales cuando no se están editando
+        delete empleadoData.username;
+        delete empleadoData.email;
+        delete empleadoData.password;
+      }
+      
       const actualizado = await updateEmpleado(empleadoEditando.id, empleadoData, token);
       
       if (actualizado) {
@@ -331,8 +353,14 @@ const AdminPanel = () => {
           base_salary: '',
           banco: '',
           cuenta: '',
-          status: 'Activo'
+          status: 'Activo',
+          crear_usuario: false,
+          username: '',
+          email: '',
+          password: ''
         });
+        setEditarCredenciales(false);
+        setMostrarFormularioEmpleado(false);
         showAlert('Empleado actualizado exitosamente', 'success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -563,99 +591,291 @@ const AdminPanel = () => {
   if (loading) return <p>Cargando datos...</p>;
 
   return (
-    <div className="panel admin-panel">
+    <div className="panel admin-panel" style={{ maxWidth: '100%', width: '100%', padding: '1rem' }}>
       <h2>Panel del Administrador</h2>
 
-      {/* Tabs */}
-      <div style={{ marginBottom: '2rem', borderBottom: '2px solid #ccc' }}>
-        <button
-          onClick={() => setActiveTab('empleados')}
-          style={{
-            padding: '0.5rem 1rem',
-            marginRight: '1rem',
-            border: 'none',
-            background: activeTab === 'empleados' ? '#007bff' : '#f0f0f0',
-            color: activeTab === 'empleados' ? 'white' : 'black',
-            cursor: 'pointer'
-          }}
-        >
-          Empleados
-        </button>
-        <button
-          onClick={() => setActiveTab('nomina')}
-          style={{
-            padding: '0.5rem 1rem',
-            border: 'none',
-            background: activeTab === 'nomina' ? '#007bff' : '#f0f0f0',
-            color: activeTab === 'nomina' ? 'white' : 'black',
-            cursor: 'pointer'
-          }}
-        >
-          Nómina
-        </button>
-      </div>
+      {/* Navbar principal: Tabs + Acciones + Búsqueda */}
+      <nav style={{ 
+        marginBottom: '2rem', 
+        padding: '0.75rem 1.25rem',
+        backgroundColor: '#343a40',
+        borderRadius: '8px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        {/* Grupo izquierdo: Tabs de navegación + Botón Agregar */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          alignItems: 'center',
+          flexWrap: 'wrap'
+        }}>
+          {/* Tabs de navegación */}
+          <button
+            onClick={() => setActiveTab('empleados')}
+            style={{
+              padding: '0.6rem 1.25rem',
+              border: 'none',
+              background: activeTab === 'empleados' ? '#007bff' : 'transparent',
+              color: activeTab === 'empleados' ? '#fff' : '#adb5bd',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              fontWeight: '500',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'empleados') {
+                e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                e.target.style.color = '#fff';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'empleados') {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#adb5bd';
+              }
+            }}
+          >
+            Empleados
+          </button>
+          <button
+            onClick={() => setActiveTab('nomina')}
+            style={{
+              padding: '0.6rem 1.25rem',
+              border: 'none',
+              background: activeTab === 'nomina' ? '#007bff' : 'transparent',
+              color: activeTab === 'nomina' ? '#fff' : '#adb5bd',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              fontWeight: '500',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== 'nomina') {
+                e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                e.target.style.color = '#fff';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== 'nomina') {
+                e.target.style.backgroundColor = 'transparent';
+                e.target.style.color = '#adb5bd';
+              }
+            }}
+          >
+            Nómina
+          </button>
+
+          {/* Botón Agregar Empleado (solo en tab Empleados) */}
+          {activeTab === 'empleados' && (
+            <button
+              type="button"
+              onClick={() => {
+                setModoEdicion(false);
+                setEmpleadoEditando(null);
+                setEditarCredenciales(false);
+                setNuevoEmpleado({
+                  doc_type: 'CC',
+                  doc_number: '',
+                  nombres: '',
+                  apellidos: '',
+                  telefono: '',
+                  cargo: '',
+                  fecha_ingreso: '',
+                  base_salary: '',
+                  banco: '',
+                  cuenta: '',
+                  status: 'Activo',
+                  crear_usuario: false,
+                  username: '',
+                  email: '',
+                  password: ''
+                });
+                setMostrarFormularioEmpleado(true);
+              }}
+              style={{
+                padding: '0.6rem 1.25rem',
+                fontSize: '0.95rem',
+                background: '#28a745',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                fontWeight: '500',
+                transition: 'background-color 0.2s ease',
+                marginLeft: '0.5rem'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#218838'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#28a745'}
+            >
+              ➕ Agregar Empleado
+            </button>
+          )}
+        </div>
+
+        {/* Grupo derecho: Búsqueda (solo en tab Empleados) */}
+        {activeTab === 'empleados' && (
+          <form
+            onSubmit={handleSearchEmpleado}
+            style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flex: '0 1 400px',
+              minWidth: '250px',
+              alignItems: 'center'
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Buscar empleado..."
+              value={searchEmpleado}
+              onChange={(e) => setSearchEmpleado(sanitizeString(e.target.value))}
+              style={{
+                flex: '1',
+                padding: '0.6rem 0.75rem',
+                border: '1px solid #495057',
+                borderRadius: '4px',
+                fontSize: '0.95rem',
+                boxSizing: 'border-box',
+                backgroundColor: '#fff',
+                color: '#333'
+              }}
+            />
+            <button 
+              type="submit" 
+              style={{ 
+                padding: '0.6rem 1rem',
+                fontSize: '0.95rem',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                backgroundColor: '#007bff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              🔍 Buscar
+            </button>
+            {searchEmpleado && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchEmpleado('');
+                  setEmpleadosPagination({ ...empleadosPagination, page: 1 });
+                  loadEmpleados(1, empleadosPagination.limit, '');
+                }}
+                style={{ 
+                  padding: '0.6rem 1rem',
+                  background: '#6c757d',
+                  color: '#fff',
+                  fontSize: '0.95rem',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                ✕ Limpiar
+              </button>
+            )}
+          </form>
+        )}
+      </nav>
 
       {/* Tab de Empleados */}
       {activeTab === 'empleados' && (
         <>
-          {/* Búsqueda de empleados */}
-          <section className="panel-section" style={{ maxWidth: '600px', width: '100%', margin: '0 auto 2rem' }}>
-            <h3>Buscar Empleados</h3>
-            <form onSubmit={handleSearchEmpleado} style={{ width: '100%' }}>
-              <input
-                type="text"
-                placeholder="Buscar por nombre o número de documento..."
-                value={searchEmpleado}
-                onChange={(e) => setSearchEmpleado(sanitizeString(e.target.value))}
+
+          {/* Overlay de formulario de empleado (crear / editar) */}
+          {mostrarFormularioEmpleado && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                zIndex: 1000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '1rem'
+              }}
+              onClick={() => {
+                // cerrar al hacer clic fuera del contenido
+                setMostrarFormularioEmpleado(false);
+                setModoEdicion(false);
+                setEmpleadoEditando(null);
+                setEditarCredenciales(false);
+              }}
+            >
+              <div
                 style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                  marginBottom: '0.75rem'
+                  backgroundColor: '#fff',
+                  borderRadius: '8px',
+                  maxWidth: '1200px',
+                  width: '95%',
+                  minWidth: '320px',
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
+                  padding: '2rem',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                  position: 'relative'
                 }}
-              />
-              <div style={{ 
-                display: 'flex', 
-                gap: '0.5rem', 
-                justifyContent: 'flex-start'
-              }}>
-                <button 
-                  type="submit" 
-                  style={{ 
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '1rem'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1rem'
                   }}
                 >
-                  Buscar
-                </button>
-                {searchEmpleado && (
+                  <h3 style={{ margin: 0 }}>
+                    {modoEdicion ? '✏️ Editar Empleado' : '➕ Crear nuevo Empleado'}
+                  </h3>
                   <button
                     type="button"
                     onClick={() => {
-                      setSearchEmpleado('');
-                      setEmpleadosPagination({ ...empleadosPagination, page: 1 });
-                      loadEmpleados(1, empleadosPagination.limit, '');
+                      setMostrarFormularioEmpleado(false);
+                      setModoEdicion(false);
+                      setEmpleadoEditando(null);
+                      setEditarCredenciales(false);
                     }}
-                    style={{ 
-                      padding: '0.75rem 1.5rem',
-                      background: '#6c757d',
-                      fontSize: '1rem'
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      fontSize: '1.5rem',
+                      cursor: 'pointer',
+                      color: '#666'
                     }}
+                    aria-label="Cerrar formulario"
                   >
-                    Limpiar
+                    ×
                   </button>
-                )}
-              </div>
-            </form>
-          </section>
+                </div>
 
-          <section className={`panel-section ${modoEdicion ? 'editing-mode' : ''}`} ref={empleadoFormRef}>
-            <h3>{modoEdicion ? '✏️ Editar Empleado' : '➕ Crear nuevo Empleado'}</h3>
-            <form onSubmit={modoEdicion ? handleActualizarEmpleado : handleCrearEmpleado}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <form onSubmit={modoEdicion ? handleActualizarEmpleado : handleCrearEmpleado}>
+                  <div className="empleado-form-grid" style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '1rem'
+                  }}>
                 <div>
                   <label>Tipo de Documento *</label>
                   <select name="doc_type" value={nuevoEmpleado.doc_type} onChange={handleEmpleadoChange} required>
@@ -760,12 +980,12 @@ const AdminPanel = () => {
                     <option value="Inactivo">Inactivo</option>
                   </select>
                 </div>
-              </div>
-              
-              {!modoEdicion && (
-                <>
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '1rem' }}>
+                  </div>
+                  
+                  {!modoEdicion && (
+                    <>
+                      <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '1rem' }}>
                       <input
                         type="checkbox"
                         checked={nuevoEmpleado.crear_usuario}
@@ -775,7 +995,7 @@ const AdminPanel = () => {
                     </label>
                     
                     {nuevoEmpleado.crear_usuario && (
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                      <div className="empleado-form-grid" style={{ marginTop: '1rem' }}>
                         <div>
                           <label>Nombre de Usuario *</label>
                           <input
@@ -783,7 +1003,7 @@ const AdminPanel = () => {
                             type="text"
                             value={nuevoEmpleado.username}
                             onChange={handleEmpleadoChange}
-                            required={nuevoEmpleado.crear_usuario}
+                            required
                           />
                         </div>
                         <div>
@@ -793,7 +1013,7 @@ const AdminPanel = () => {
                             type="email"
                             value={nuevoEmpleado.email}
                             onChange={handleEmpleadoChange}
-                            required={nuevoEmpleado.crear_usuario}
+                            required
                           />
                         </div>
                         <div>
@@ -803,55 +1023,137 @@ const AdminPanel = () => {
                             type="password"
                             value={nuevoEmpleado.password}
                             onChange={handleEmpleadoChange}
-                            required={nuevoEmpleado.crear_usuario}
+                            required
                             minLength={6}
                           />
                         </div>
                       </div>
                     )}
+                      </div>
+                    </>
+                  )}
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'center' }}>
+                    <button type="submit" style={{ minWidth: '200px' }}>
+                      {modoEdicion ? 'Guardar cambios' : 'Crear Empleado'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModoEdicion(false);
+                        setEmpleadoEditando(null);
+                        setNuevoEmpleado({
+                          doc_type: 'CC',
+                          doc_number: '',
+                          nombres: '',
+                          apellidos: '',
+                          telefono: '',
+                          cargo: '',
+                          fecha_ingreso: '',
+                          base_salary: '',
+                          banco: '',
+                          cuenta: '',
+                          status: 'Activo',
+                          crear_usuario: false,
+                          username: '',
+                          email: '',
+                          password: ''
+                        });
+                        setEditarCredenciales(false);
+                        setMostrarFormularioEmpleado(false);
+                      }}
+                      style={{ 
+                        minWidth: '200px',
+                        background: '#6c757d'
+                      }}
+                    >
+                      Cancelar
+                    </button>
                   </div>
-                </>
-              )}
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'center' }}>
-                <button type="submit" style={{ minWidth: '200px' }}>
-                  {modoEdicion ? 'Guardar cambios' : 'Crear Empleado'}
-                </button>
-                {modoEdicion && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModoEdicion(false);
-                      setEmpleadoEditando(null);
-                      setNuevoEmpleado({
-                        doc_type: 'CC',
-                        doc_number: '',
-                        nombres: '',
-                        apellidos: '',
-                        telefono: '',
-                        cargo: '',
-                        fecha_ingreso: '',
-                        base_salary: '',
-                        banco: '',
-                        cuenta: '',
-                        status: 'Activo',
-                        crear_usuario: false,
-                        username: '',
-                        email: '',
-                        password: ''
-                      });
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    style={{ 
-                      minWidth: '200px',
-                      background: '#6c757d'
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                )}
+                  
+                  {/* Sección de credenciales de acceso en modo edición */}
+                  {modoEdicion && (
+                    <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                      <label
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          cursor: 'pointer',
+                          marginBottom: '1rem',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                    <input
+                      type="checkbox"
+                      checked={editarCredenciales}
+                      onChange={(e) => setEditarCredenciales(e.target.checked)}
+                    />
+                    <span style={{ fontWeight: '500' }}>Editar datos de acceso (usuario, correo y/o contraseña)</span>
+                      </label>
+
+                      {editarCredenciales && (
+                        <div className="empleado-form-grid" style={{ marginTop: '1rem' }}>
+                      {!(empleadoEditando && (empleadoEditando.username || empleadoEditando.email || empleadoEditando.id_usuario)) && (
+                        <p style={{ gridColumn: '1 / -1', margin: 0, marginBottom: '0.5rem', color: '#555', fontSize: '0.9rem' }}>
+                          Para crear la cuenta de acceso de este empleado, debes indicar <strong>usuario</strong>, <strong>correo</strong> y <strong>contraseña</strong>.
+                        </p>
+                      )}
+                      <div>
+                        <label>
+                          Nombre de Usuario
+                          {!(empleadoEditando && (empleadoEditando.username || empleadoEditando.email || empleadoEditando.id_usuario)) && ' *'}
+                        </label>
+                        <input
+                          name="username"
+                          type="text"
+                          value={nuevoEmpleado.username}
+                          onChange={handleEmpleadoChange}
+                          required={editarCredenciales && !(empleadoEditando && (empleadoEditando.username || empleadoEditando.email || empleadoEditando.id_usuario))}
+                        />
+                      </div>
+                      <div>
+                        <label>
+                          Correo Electrónico *
+                        </label>
+                        <input
+                          name="email"
+                          type="email"
+                          value={nuevoEmpleado.email}
+                          onChange={handleEmpleadoChange}
+                          required={editarCredenciales}
+                        />
+                      </div>
+                      <div>
+                        <label>
+                          {empleadoEditando && (empleadoEditando.username || empleadoEditando.email || empleadoEditando.id_usuario)
+                            ? 'Nueva Contraseña (opcional)'
+                            : 'Contraseña *'}
+                        </label>
+                        <input
+                          name="password"
+                          type="password"
+                          value={nuevoEmpleado.password}
+                          onChange={handleEmpleadoChange}
+                          placeholder={
+                            empleadoEditando && (empleadoEditando.username || empleadoEditando.email || empleadoEditando.id_usuario)
+                              ? 'Dejar en blanco si no deseas cambiarla'
+                              : ''
+                          }
+                          minLength={editarCredenciales ? 6 : undefined}
+                          required={
+                            editarCredenciales &&
+                            !(empleadoEditando && (empleadoEditando.username || empleadoEditando.email || empleadoEditando.id_usuario))
+                          }
+                        />
+                      </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </form>
               </div>
-            </form>
-          </section>
+            </div>
+          )}
 
           <section className="panel-section">
             <h3>Lista de Empleados</h3>

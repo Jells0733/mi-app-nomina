@@ -10,7 +10,7 @@ const {
   deleteEmpleadoById,
   getEmpleadoById
 } = require('../models/empleadoModel');
-const { createUser } = require('../models/userModel');
+const { createUser, updateUserById } = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const { withTransaction } = require('../utils/transactions');
 
@@ -219,17 +219,110 @@ const updateEmpleado = async (req, res) => {
       return res.status(404).json({ error: 'Empleado no encontrado' });
     }
 
-    // Actualizar el empleado en la base de datos
-    const actualizado = await updateEmpleadoById(id, updateData);
-    res.json(actualizado);
+    // Separar posibles datos de usuario del resto de campos de empleado
+    const { username, email, password, ...empleadoUpdates } = updateData;
+
+    const tieneCambiosUsuario =
+      (username !== undefined && username !== null && username !== '') ||
+      (email !== undefined && email !== null && email !== '') ||
+      (password !== undefined && password !== null && password !== '');
+
+    // Si no hay cambios de usuario, actualizar solo empleado
+    if (!tieneCambiosUsuario) {
+      const actualizadoSoloEmpleado = await updateEmpleadoById(id, empleadoUpdates);
+      return res.json(actualizadoSoloEmpleado);
+    }
+
+    const esNuevoUsuario = !empleado.id_usuario;
+
+    // Reglas de obligatoriedad:
+    // - Si es un usuario nuevo: username, email y password son OBLIGATORIOS
+    // - Si ya existe usuario: email es OBLIGATORIO cuando se editan credenciales
+    if (esNuevoUsuario) {
+      if (!username || !email || !password) {
+        return res.status(400).json({
+          error: 'Para crear una cuenta de usuario se requieren nombre de usuario, correo y contraseña'
+        });
+      }
+    } else {
+      if (!email) {
+        return res.status(400).json({
+          error: 'El correo electrónico es obligatorio al actualizar los datos de acceso'
+        });
+      }
+    }
+
+    // Validaciones adicionales para password si viene en la petición
+    if (password && password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    // Si hay cambios de usuario, usar transacción para actualizar usuario + empleado
+    const actualizado = await withTransaction(async (client) => {
+      let userId = empleado.id_usuario;
+
+      // Si el empleado aún no tiene usuario asociado y se envían credenciales,
+      // crear el usuario y asociarlo al empleado
+      if (!userId) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await createUser(
+          {
+            username,
+            nombre: `${empleadoUpdates.nombres || empleado.nombres} ${empleadoUpdates.apellidos || empleado.apellidos}`.trim(),
+            email: email.toLowerCase().trim(),
+            password: hashedPassword,
+            role: 'empleado',
+          },
+          client
+        );
+
+        userId = user.id;
+
+        // Asegurar que el empleado quede asociado al nuevo usuario
+        empleadoUpdates.id_usuario = userId;
+      } else {
+        // Si ya tiene usuario, actualizar solo los campos enviados
+        const userUpdates = {};
+
+        if (username) {
+          userUpdates.username = username;
+        }
+        if (email) {
+          userUpdates.email = email.toLowerCase().trim();
+        }
+        if (password) {
+          userUpdates.password = await bcrypt.hash(password, 10);
+        }
+
+        if (Object.keys(userUpdates).length > 0) {
+          await updateUserById(userId, userUpdates, client);
+        }
+      }
+
+      const empleadoActualizado = await updateEmpleadoById(id, empleadoUpdates, client);
+      return empleadoActualizado;
+    });
+
+    return res.json(actualizado);
   } catch (error) {
     console.error('Error al actualizar empleado:', error);
-    
-    // Manejar error de duplicado de doc_number
-    if (error.code === '23505' && error.constraint === 'empleados_doc_number_key') {
-      return res.status(400).json({ error: 'Ya existe un empleado con este número de documento' });
+
+    // Mensaje específico si faltan datos para crear usuario
+    if (error.message && error.message.includes('crear una cuenta de usuario')) {
+      return res.status(400).json({ error: error.message });
     }
-    
+
+    // Manejar error de duplicado de doc_number
+    if (error.code === '23505') {
+      if (error.constraint === 'empleados_doc_number_key') {
+        return res.status(400).json({ error: 'Ya existe un empleado con este número de documento' });
+      }
+      if (error.constraint && error.constraint.includes('users')) {
+        return res.status(400).json({ error: 'Ya existe un usuario con este username o email' });
+      }
+    }
+
     res.status(500).json({ error: 'Error al actualizar empleado' });
   }
 };

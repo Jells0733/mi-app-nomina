@@ -19,12 +19,53 @@ const db = require('../config/db');
 const createUser = async ({ username, nombre = null, email, password, role }, client = null) => {
   // Usar el cliente proporcionado (para transacciones) o el pool por defecto
   const queryClient = client || db;
-  
+
   const res = await queryClient.query(
     `INSERT INTO users (username, nombre, email, password, role)
      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
     [username, nombre, email, password, role]
   );
+  return res.rows[0];
+};
+
+/**
+ * Actualiza un usuario existente en la base de datos
+ * @param {number} id - ID del usuario a actualizar
+ * @param {Object} userData - Campos a actualizar (username, email, password)
+ * @param {Object} client - Cliente de base de datos (opcional, para transacciones)
+ * @returns {Object} Usuario actualizado
+ */
+const updateUserById = async (id, userData, client = null) => {
+  const queryClient = client || db;
+
+  const fields = [];
+  const values = [];
+  let paramIndex = 1;
+
+  const allowedFields = ['username', 'email', 'password'];
+
+  for (const field of allowedFields) {
+    if (Object.prototype.hasOwnProperty.call(userData, field)) {
+      fields.push(`${field} = $${paramIndex}`);
+      values.push(userData[field]);
+      paramIndex++;
+    }
+  }
+
+  if (fields.length === 0) {
+    throw new Error('No hay campos para actualizar en el usuario');
+  }
+
+  values.push(id);
+
+  const query = `
+    UPDATE users
+    SET ${fields.join(', ')}
+    WHERE id = $${paramIndex}
+    RETURNING *
+  `;
+
+  const res = await queryClient.query(query, values);
   return res.rows[0];
 };
 
@@ -43,5 +84,6 @@ const getUserByEmail = async (email) => {
 
 module.exports = {
   createUser,
+  updateUserById,
   getUserByEmail,
 };

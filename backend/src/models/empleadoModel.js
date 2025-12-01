@@ -132,9 +132,10 @@ const getEmpleadoByUserId = async (userId) => {
  * Actualiza los datos de un empleado existente
  * @param {number} id - ID del empleado a actualizar
  * @param {Object} empleadoData - Nuevos datos del empleado
+ * @param {Object} client - Cliente de base de datos (opcional, para transacciones)
  * @returns {Object} Empleado actualizado
  */
-const updateEmpleadoById = async (id, empleadoData) => {
+const updateEmpleadoById = async (id, empleadoData, client = null) => {
   // Construir dinámicamente la consulta UPDATE basada en los campos proporcionados
   const fields = [];
   const values = [];
@@ -146,7 +147,7 @@ const updateEmpleadoById = async (id, empleadoData) => {
   ];
 
   for (const field of allowedFields) {
-    if (empleadoData.hasOwnProperty(field)) {
+    if (Object.prototype.hasOwnProperty.call(empleadoData, field)) {
       fields.push(`${field} = $${paramIndex}`);
       values.push(empleadoData[field]);
       paramIndex++;
@@ -165,7 +166,8 @@ const updateEmpleadoById = async (id, empleadoData) => {
     RETURNING *
   `;
 
-  const res = await db.query(query, values);
+  const queryClient = client || db;
+  const res = await queryClient.query(query, values);
   return res.rows[0];
 };
 
